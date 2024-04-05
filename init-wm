@@ -1,0 +1,85 @@
+#! /usr/bin/env sh
+source $XDG_CONFIG_HOME/bspwm/config
+maybe_kill_all(){
+	local program=$1
+	pids=( $(pgrep $program) )
+	if [[ -n $pids ]]; then
+		for pid in $pids; do
+			kill $pid
+		done
+	fi
+}
+
+
+exec_if_not_running(){
+	local program=$1
+	local args=$2
+	if ! [[ $(pgrep $program) ]]; then
+		$program $args &
+	fi
+}
+
+maybe_wait_for_process(){
+	local proc=$1
+	while [[ -n $proc && -e /proc/$proc ]]; do
+		sleep 0.1
+	done
+}
+restart_program(){
+	local program=$1
+	local args=$2
+	maybe_kill_all $program
+	$program $args &
+}
+
+set_wallpaper(){
+	maybe_wait_for_process $configure_outputs
+	feh --no-fehbg --bg-fill $wallpaper &
+	echo "Wallpaper set"
+}
+
+maybe_start_picom(){
+	maybe_wait_for_process $configure_outputs
+	exec_if_not_running picom "--config=$HOME/.config/picom/picom.conf"
+	echo "Picom started"
+}
+
+start_programs(){	
+	restart_program sxhkd ""
+	exec_if_not_running urxvtd "--quiet --opendisplay --fork"
+	maybe_start_picom &
+	set_wallpaper &
+}
+
+configure_xresources(){
+	xset -dpms
+	xsetroot -cursor_name left_ptr &
+	xrdb -merge $HOME/.Xresources
+}
+
+
+update_bspwm_mons(){
+	maybe_wait_for_process $monmon
+	maybe_kill_all polybar
+
+	monitors=$(bspc query -M --names)
+	for mon in $monitors; do
+		echo "Setting up mon $mon"
+		bspc monitor $mon -d 1 2 3 4 5 6 7 8 9 10
+		MONITOR=$mon polybar -q default &
+	done
+	echo "Finished updating monitors"
+}
+
+configure_outputs(){
+	# a monitor script that updates outputs
+	monmon & monmon=$!
+	update_bspwm_mons
+}
+
+start_wm() {
+	configure_outputs & configure_outputs=$!
+	configure_xresources &
+	start_programs &
+}
+start_wm 2>&1 > /dev/null &

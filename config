@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# bspc vars, shell variables
+bspc_border_width=2
+bspc_window_gap=12
+bspc_split_ratio=0.52
+bspc_borderless_monocle=true
+bspc_gapless_monocle=true
+bspc_focus_follows_pointer=true
+
+bspc_automatic_scheme=spiral
+bspc_initial_polarity=first_child
+bspc_removal_adjustment=true
+
+bspc_pointer_modifier=mod1
+bspc_pointer_action1=move
+bspc_pointer_action2=resize_corner
+
+wallpaper="${HOME}/Pictures/wallpapers/kaliNameless.png"
