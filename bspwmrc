@@ -30,7 +30,6 @@ update_config(){
 				;;
 		esac
 	done
-	echo "Config updated"
 }
 
 exec_if_not_running(){
@@ -57,25 +56,24 @@ restart_program(){
 set_wallpaper(){
 	maybe_wait_for_process $configure_outputs
 	feh --no-fehbg --bg-fill $wallpaper &
-	echo "Wallpaper set"
 }
 
 maybe_start_picom(){
 	maybe_wait_for_process $configure_outputs
 	exec_if_not_running picom "--config=$HOME/.config/picom/picom.conf"
-	echo "Picom started"
 }
 
 start_programs(){	
 	restart_program sxhkd ""
-	gentoo-pipewire-launcher restart &
 	exec_if_not_running urxvtd "--quiet --opendisplay --fork"
+	gentoo-pipewire-launcher &
+	xfce4-power-manager &
+	light-locker &
 	maybe_start_picom &
 	set_wallpaper &
 }
 
 configure_xresources(){
-	xset -dpms
 	xsetroot -cursor_name left_ptr &
 	xrdb -merge $HOME/.Xresources
 }
@@ -88,10 +86,9 @@ update_bspwm_mons(){
 	monitors=$(bspc query -M --names)
 	for mon in $monitors; do
 		echo "Setting up mon $mon"
-		bspc monitor $mon -d 1 2 3 4 5 6 7 8 9 10
+		bspc monitor $mon -d 1 2 3 4
 		MONITOR=$mon polybar -q default &
 	done
-	echo "Finished updating monitors"
 }
 
 configure_outputs(){
@@ -101,6 +98,7 @@ configure_outputs(){
 }
 
 start_bspwm() {
+	killall polybar
 	configure_outputs & configure_outputs=$!
 	configure_xresources &
 	update_config &
